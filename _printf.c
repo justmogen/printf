@@ -1,61 +1,84 @@
 #include "main.h"
-/**
- * check_mem - check memory for contents and writes it if it exist
- * @char_arr: The array of characters
- * @ndx_len:length of index
- */
-void check_mem(char char_arr[], int *ndx_len)
-{
-	if (*ndx_len > 0)
-		write(1, &char_arr[0], *ndx_len);
 
-	*ndx_len = 0;
-}
 /**
- * _printf -  a function that produces output according to a format
- * @format: a character string
- * Returns: the number of characters printed
- *		(excluding the null byte used to end output to strings)
+ * erasor - Peforms erasing operations for _printf.
+ * @words: A va_list of arguments provided to _printf.
+ * @results: the buffer_t struct.
+ */
+void erasor(va_list words, buffer_print *results)
+{
+	va_end(words);
+	write(1, results->begn, result->leng);
+	free_buffer(results);
+}
+
+/**
+ * check_printf - checks through format string for _printf.
+ * @format: character string to print - may contain directives.
+ * @result: A buffer_t struct containing a buffer.
+ * @words:va_list of arguments.
+ *
+ * Return: number of characters stored to result
+ */
+int check_printf(const char *format, va_list words, buffer_print *result)
+{
+	int ndx, width, prec, ret = 0;
+	char buffer = 0;
+	unsigned char leng = 0, flags;
+	unsigned int (*fun)(va_list, buffer_print *,
+			unsigned char, int, int, unsigned char);
+
+	for (ndx = 0; *(format + ndx); ndx++)
+	{
+		if (*(format + ndx) == '%')
+		{
+			flags = check_flags(format + ndx + 1, &buffer);
+			width = check_width(words, format + ndx + buffer + 1, &buffer);
+			prec = check_precision(words, format + ndx + buffer + 1,
+					&buffer);
+			leng = check_length(format + ndx + buffer + 1, &buffer);
+
+			fun = check_specifiers(format + ndx + buffer + 1);
+			if (fun != NULL)
+			{
+				ndx += buffer + 1;
+				ret += fun(words, result, flags, width, prec, leng);
+				continue;
+			}
+			else if (*(format + ndx + buffer + 1) == '\0')
+			{
+				ret = -1;
+				break;
+			}
+		}
+		ret += _memcpy(result, (format + ndx), 1);
+		ndx += (leng != 0) ? 1 : 0;
+	}
+	erasor(words, result);
+	return (ret);
+}
+
+/**
+ * _printf - Outputs the required formatted string.
+ * @format:gives character string to print,can contain directives.
+ *
+ * Return:number of characters printed.
  */
 int _printf(const char *format, ...)
 {
-	int ndx, mem_ndx, write_mem = 0, flags;
-	char mem[mem_size];
-	va_list words;
-	int width, precision, space, write;
+	buffer_print *result;
+	va_list list;
+	int buff;
 
 	if (format == NULL)
 		return (-1);
+	result = init_buffer();
+	if (result == NULL)
+		return (-1);
 
-	va_start(words, format);
+	va_start(list, format);
 
-	for (ndx = 0; format && *(format + ndx) != '\0'; ndx++)
-		mem_ndx = 0;
-		if (format[ndx] != '%')
-		{
-			mem[mem_ndx++] = format[ndx];
-			if (mem_ndx == mem_size)
-				check_mem(mem, &mem_ndx);
-			write_mem++;
-		}
-		else
-		{
-			check_mem(mem, &mem_ndx);
-			flags = check_flags(format, &ndx);
-			wid = check_width(format, &ndx, words);
-			prec = check_precision(format, &ndx, words);
-			space = check_space(format, &ndx);
-			++ndx;
+	buff = check_printf(format, list, result);
 
-			write = 0;
-			write = use_print(format, &ndx, words, mem, flags, width,
-					precision, space);
-			if (write == -1)
-				return (-1);
-			write_mem += write;
-		}
-	check_mem(mem,&mem_ndx);
-	va_end(words);
-
-	return (write_mem);
+	return (buff);
 }
