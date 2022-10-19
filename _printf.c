@@ -3,13 +3,13 @@
 /**
  * erasor - Peforms erasing operations for _printf.
  * @words: A va_list of arguments provided to _printf.
- * @results: the buffer_t struct.
+ * @result: the buffer_t struct.
  */
-void erasor(va_list words, buffer_print *results)
+void erasor(va_list words, buffer_print *result)
 {
 	va_end(words);
-	write(1, results->begn, result->leng);
-	free_buffer(results);
+	write(1, result->begn, result->leng);
+	free_buffer(result);
 }
 
 /**
